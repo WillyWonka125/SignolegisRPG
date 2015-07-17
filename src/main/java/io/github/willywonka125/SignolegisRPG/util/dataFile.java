@@ -2,11 +2,16 @@ package io.github.willywonka125.SignolegisRPG.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 
+import io.github.willywonka125.SignolegisRPG.Register;
 import io.github.willywonka125.SignolegisRPG.Signolegis;
 
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration; 
@@ -14,65 +19,66 @@ import org.bukkit.configuration.file.YamlConfigurationOptions;
 
 public class dataFile { //Contains methods to retrieve and alter data
 	
-	private Signolegis si;
+	static Signolegis si = null;
+	static Register reg = null;
 	
-	public void registerPlugin (Signolegis plugin) {
-		si = plugin;
+	public dataFile (Signolegis instance) {
+		si = instance;
+	}
+	
+	public dataFile (Register instance) {
+		reg = instance;
 	}
 
-	public File datafile;
-	public FileConfiguration data;
+
+	public File datafile = null;
+	public FileConfiguration data = null;
+	
+	public void reloadDataFile() {
+	    if (datafile == null) {
+	    	si.getLogger().info("test");
+	    	datafile = new File(si.getDataFolder(), "data.yml");
+	    }
+	    data = YamlConfiguration.loadConfiguration(datafile);
+	 
+	    // Look for defaults in the jar
+	    Reader defConfigStream = null;
+		try {
+			defConfigStream = new InputStreamReader(si.getResource("data.yml"), "UTF8");
+		} catch (UnsupportedEncodingException e) {
+			si.getLogger().log(Level.SEVERE, "Error while reloading data.yml", e);
+		}
+	    if (defConfigStream != null) {
+	        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+	        data.setDefaults(defConfig);
+	    }
+	}
 	
 	public FileConfiguration getData() {
-		return data;
+	    if (data == null) {
+	        reloadDataFile();
+	    }
+	    return data;
 	}
 	
-	public String[] getLoreList() {
-		
-		String[] none = {
-				ChatColor.RED + "No lore books are registered!"
-		};
-		
-		try {
-			if (!(getLoreSection() == null)) {
-				return none;
-			} else {
-				return (String[]) getLoreSection().getKeys(false).toArray();
-			}
-		} catch (NullPointerException e) {
-			si.getLogger().log(Level.SEVERE, "Null returned from data.yml, will now attempt to initialize file", e);
-			initDataFile();
-			return none;
-		}
+	public void saveDataFile() {
+	    if (data == null || datafile == null) {
+	        return;
+	    }
+	    try {
+	        getData().save(datafile);
+	    } catch (IOException ex) {
+	        si.getLogger().log(Level.SEVERE, "Could not save config to " + datafile, ex);
+	    }
 	}
 	
-	public ConfigurationSection getLoreSection() {
-		ConfigurationSection tmp = null;
-		try {
-			tmp = data.getConfigurationSection("lores");
-		} catch (NullPointerException e) {
-			si.getLogger().log(Level.SEVERE, "Signolegis was unable to access data.yml", e);
-			si.getLogger().log(Level.SEVERE, "Report this to https://github.com/WillyWonka125/SignolegisRPG/issues, or update to the latest build.");
-		}
-		return tmp;
-	}
-	
-	public void initDataFile() { //More can and will be added here
-		data.createSection("lores");
-		data.createSection("chests");
-		try {
-			data.save(datafile);
-			data = YamlConfiguration.loadConfiguration(datafile); //We'll put this in the try...
-		} catch (IOException e) {
-			si.getLogger().log(Level.SEVERE, "Unable to save data file", e);
-		}
-	}
-	
-	public void getDataFile() throws IOException {
-		if (!si.getDataFolder().exists()) si.getDataFolder().mkdir();
-		datafile = new File (si.getDataFolder(), "data.yml");
-		if (!datafile.exists()) datafile.createNewFile();
-		data = YamlConfiguration.loadConfiguration(datafile);
+	public void saveDefaultData() {
+	    if (datafile == null) {
+	        datafile = new File(si.getDataFolder(), "data.yml");
+	    }
+	    if (!datafile.exists()) {            
+	         si.saveResource("data.yml", false);
+	     }
 	}
 	
 }
