@@ -3,6 +3,7 @@ package io.github.willywonka125.SignolegisRPG.handlers;
 import io.github.willywonka125.SignolegisRPG.Register;
 import io.github.willywonka125.SignolegisRPG.Signolegis;
 
+import org.bukkit.ChatColor;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.event.EventHandler;
@@ -26,9 +27,13 @@ public class ChestHandler implements Listener {
 			Chest c = (Chest) e.getInventory().getHolder();
 			si.getLogger().info("Opened chest location: " + reg.serializeLoc(c.getLocation()));
 			if (reg.isChestRegistered(reg.serializeLoc(c.getLocation()))) {
-				if (!(e.getInventory().contains(reg.getLore(reg.getChestLore(c.getLocation()), null)))) {
-					e.getInventory().addItem(reg.getLore(reg.getChestLore(c.getLocation()), null));
-				}
+				if (!(e.getInventory().contains(reg.getChestLore(c.getLocation())))) {
+					if (reg.getChestLore(c.getLocation()) != null){
+						e.getInventory().addItem(reg.getChestLore(c.getLocation()));
+					} else {
+						e.getPlayer().sendMessage(ChatColor.RED + "No lore found for this chest (but it seems to be registered)");
+					}
+				} 
 			}
 		}
 	}

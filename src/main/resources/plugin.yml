@@ -1,8 +1,12 @@
 name: SignolegisRPG
 main: io.github.willywonka125.SignolegisRPG.Signolegis
-version: 0.2
+version: 0.2.3
 commands:
   signo:
     description: Singolegis administrative command
     usage: /signo help
     aliases: [sg, sig, si]
+  quests:
+    description: Signolegis quests command
+    usage: /quests
+    aliases: [q, quest]

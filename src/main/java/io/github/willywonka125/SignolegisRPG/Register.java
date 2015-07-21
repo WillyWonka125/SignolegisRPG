@@ -37,12 +37,9 @@ public class Register {
 		}
 	}
 	
-	public ItemStack getLore(String name, Player player) {
+	public ItemStack getLore(String name) {
 		ItemStack tmp = null;
 		if (!isLoreRegistered(name)) {
-			if (player != null) {
-				player.sendMessage(ChatColor.RED + "That lore can not be found!");
-			}
 			return tmp;
 		} else {
 			tmp = df.getData().getItemStack("lores." + name);
@@ -94,14 +91,14 @@ public class Register {
 			df.getData().set("chests." + serializeLoc(loc) + ".name", name); //Set the location
 			df.getData().set("chests." + serializeLoc(loc) + ".lore", lore);
 			df.saveDataFile();
-			player.sendMessage(ChatColor.GREEN + "Registered chest '" + name + "' at " + loc.toString());
+			player.sendMessage(ChatColor.GREEN + "Registered chest '" + name + "' at " + serializeLoc(loc));
 		} else {
 			player.sendMessage(ChatColor.RED + "That location/name is already registered!");
 		}
 	}
 	
-	public String getChestLore (Location loc) {
-		return df.getData().getString("chests." + loc + ".lore");
+	public ItemStack getChestLore (Location loc) {
+		return getLore(df.getData().getString("chests." + serializeLoc(loc) + ".lore"));
 	}
 	
 

@@ -10,12 +10,8 @@ import java.util.logging.Level;
 import io.github.willywonka125.SignolegisRPG.Register;
 import io.github.willywonka125.SignolegisRPG.Signolegis;
 
-import org.bukkit.ChatColor;
-import org.bukkit.configuration.Configuration;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration; 
-import org.bukkit.configuration.file.YamlConfigurationOptions;
 
 public class dataFile { //Contains methods to retrieve and alter data
 	
@@ -36,7 +32,6 @@ public class dataFile { //Contains methods to retrieve and alter data
 	
 	public void reloadDataFile() {
 	    if (datafile == null) {
-	    	si.getLogger().info("test");
 	    	datafile = new File(si.getDataFolder(), "data.yml");
 	    }
 	    data = YamlConfiguration.loadConfiguration(datafile);
