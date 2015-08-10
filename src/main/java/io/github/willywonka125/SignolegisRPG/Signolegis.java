@@ -6,6 +6,7 @@ import java.util.logging.Level;
 
 import io.github.willywonka125.SignolegisRPG.handlers.ChestHandler;
 import io.github.willywonka125.SignolegisRPG.util.dataFile;
+import io.github.willywonka125.SignolegisRPG.util.generalUtil;
 import io.github.willywonka125.SignolegisRPG.util.inventoryManager;
 
 import org.bukkit.ChatColor;
@@ -24,6 +25,7 @@ public class Signolegis extends JavaPlugin  {
 	private Register r = null;
 	private inventoryManager im = null;
 	private Quests q = null;
+	private generalUtil gu = null;
 	
 	
 	ChatColor primary = ChatColor.AQUA;
@@ -36,12 +38,15 @@ public void onEnable() {
 		r = new Register(this);
 		q = new Quests(this);
 		im = new inventoryManager(this);
+		gu = new generalUtil(this);
 	
 	   df.saveDefaultData();
 	   
 	   getCommand("quests").setExecutor((CommandExecutor) q);
 	   getLogger().info("SignolegisRPG is starting");
 	   getServer().getPluginManager().registerEvents(ch, this);
+	   getServer().getPluginManager().registerEvents(gu, this);
+	   getServer().getPluginManager().registerEvents(im, this);
 	   this.saveDefaultConfig();
    }
 
@@ -117,6 +122,12 @@ public void onEnable() {
 					   } else {						   
 						   r.registerChest(player.getTargetBlock((HashSet<Byte>)null, 100).getLocation(), player, getArgs(args, 2), args[1]);				  
 					   }
+				   }
+			   } else if (args[0].equalsIgnoreCase("deletechest") || args[0].equalsIgnoreCase("dc")) {
+				   if (!(player.getTargetBlock((HashSet<Byte>)null, 100).getType().equals(Material.CHEST))) {
+					   sender.sendMessage(ChatColor.RED + "You are not looking at a chest.");
+				   } else {
+					   
 				   }
 			   }
 			   

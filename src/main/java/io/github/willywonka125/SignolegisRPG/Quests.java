@@ -22,9 +22,9 @@ public class Quests implements CommandExecutor {
 	 if (sender.equals(si.getServer().getConsoleSender())) {
 		   si.getLogger().log(Level.WARNING, "The Signolegis plugin can only be used by players.");
 	 } else {
-	 	sender.sendMessage("Not yet implemented");
-		 //Player player = (Player) sender;
-		 //player.openInventory(im.getQuestMenuInventory(player));
+	 	//sender.sendMessage("Not yet implemented");
+		 Player player = (Player) sender;
+		 player.openInventory(im.getQuestMenuInventory(player));
 	 }
 	 
 	 return true;

@@ -97,6 +97,13 @@ public class Register {
 		}
 	}
 	
+	public void deleteChest(Location loc, Player player) {
+		if (!(isChestRegistered(serializeLoc(loc)))) {
+			df.getData().set("chests." + serializeLoc(loc), null); //Lets hope this works
+			player.sendMessage(ChatColor.GREEN + "Removed chest at " + serializeLoc(loc));
+		}
+	}
+	
 	public ItemStack getChestLore (Location loc) {
 		return getLore(df.getData().getString("chests." + serializeLoc(loc) + ".lore"));
 	}
