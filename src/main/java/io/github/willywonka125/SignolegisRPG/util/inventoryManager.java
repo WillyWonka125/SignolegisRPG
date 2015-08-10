@@ -35,9 +35,6 @@ public class inventoryManager implements Listener {
 	ArrayList<Inventory> inventories = null;
 	
 	public Inventory getQuestMenuInventory(Player player) { //A concrete method to get the Quest inventory! Integrated with config.yml
-		if (si.equals(null)) {
-			System.out.println("si is null so that means nothing will work fuck me");
-		}
 		Inventory tmp = Bukkit.createInventory(null, 54); //We begin with an initialized empty inventory
 		try {
 			Set<String> sec = si.getConfig().getConfigurationSection("menus.main").getKeys(false); //Key will be display name of item
