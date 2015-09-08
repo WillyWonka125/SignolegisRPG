@@ -17,6 +17,7 @@ public class dataFile { //Contains methods to retrieve and alter data
 	
 	static Signolegis si = null;
 	static Register reg = null;
+	static inventoryManager im = null;
 	
 	public dataFile (Signolegis instance) {
 		si = instance;
@@ -24,6 +25,10 @@ public class dataFile { //Contains methods to retrieve and alter data
 	
 	public dataFile (Register instance) {
 		reg = instance;
+	}
+	
+	public dataFile (inventoryManager instance) {
+		im = instance;
 	}
 
 

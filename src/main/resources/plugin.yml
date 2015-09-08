@@ -1,6 +1,7 @@
 name: SignolegisRPG
 main: io.github.willywonka125.SignolegisRPG.Signolegis
-version: 0.2.4
+version: 0.2.5
+depend: [Citizens]
 commands:
   signo:
     description: Singolegis administrative command
@@ -10,3 +11,13 @@ commands:
     description: Signolegis quests command
     usage: /quests
     aliases: [q, quest]
+
+permissions:
+  signolegis.*:
+    description: Gives access to all signolegis commands
+    children:
+      signolegis.bypassfilter: true
+  quests.*:
+    description: Gives access to all quests features and commands
+    children:
+      quests.create: true

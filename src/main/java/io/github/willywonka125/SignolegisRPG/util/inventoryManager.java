@@ -2,78 +2,61 @@ package io.github.willywonka125.SignolegisRPG.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import io.github.willywonka125.SignolegisRPG.Quests;
-import io.github.willywonka125.SignolegisRPG.Signolegis;
 
 public class inventoryManager implements Listener {
 	
-	private Signolegis si = null;
-	public inventoryManager(Signolegis instance) {
-		si = instance;
-	}
+	//Player stats will be saved under players.playerName.statName
+	//Menus will be built from those stats to keep the size of data.yml down
 	
-	private Quests q = null;
+	private dataFile df = new dataFile(this);
+	
+	static Quests q = null;
 	public inventoryManager(Quests instance) {
 		q = instance;
 	}
 	
-	ArrayList<Inventory> inventories = null;
-	
-	public Inventory getQuestMenuInventory(Player player) { //A concrete method to get the Quest inventory! Integrated with config.yml
-		Inventory tmp = Bukkit.createInventory(null, 54); //We begin with an initialized empty inventory
-		try {
-			Set<String> sec = si.getConfig().getConfigurationSection("menus.main").getKeys(false); //Key will be display name of item
+
+	public Inventory buildQuestMenu(Player player) {
+		Inventory tmp = Bukkit.createInventory(null, 54);
+		
+		if (!df.getData().isConfigurationSection("players." + player.getUniqueId())) {
 			
-			for (String key : sec) {
-				tmp.setItem(si.getConfig().getInt("menus.main." + key + ".slot"), si.getConfig().getItemStack("menus." + key + ".item"));
-			}
-		} catch (NullPointerException e) { //I'll just build the default inventory in this method
-			si.getLogger().log(Level.WARNING, "Error loading menu from config.yml", e);
-			si.getLogger().info("Will now attempt to create default menu");
-			
-			ItemStack playerInfo = new ItemStack(Material.SKULL_ITEM);
+			ItemStack playerInfo = new ItemStack(Material.SKULL_ITEM, 1, (short) 3); //Build playerInfo
 			SkullMeta skullmeat = (SkullMeta) playerInfo.getItemMeta();
-			skullmeat.setOwner(player.getName()); //Skullmeat, lol.....
-			playerInfo.setItemMeta(skullmeat); //may have to cast ItemStack to skullmeat here
-			tmp.setItem(0, playerInfo);
-			si.getConfig().set("menus.main.playerInfo.slot", 0);
-			si.getConfig().set("menus.main.playerInfo.item", playerInfo); //This sets the playerInfo item as a skull with the first player to run this's head
+			skullmeat.setOwner(player.getName()); 
+			List<String> lore = new ArrayList<String>();
+			lore.add(ChatColor.GREEN + "Total XP earned: 0");
+			lore.add(ChatColor.GREEN + "Available XP: 0");
+			skullmeat.setLore(lore);
+			skullmeat.setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Total quests completed: 0");
+			playerInfo.setItemMeta(skullmeat);
+			tmp.setItem(4, playerInfo);
+			
 			
 		}
+		
+		
 		return tmp;
 	}
 	
-	public Inventory addItem(Inventory inv, ItemStack item, int row, int slot) {
-		inv.setItem(row*9 + slot, item);
-		return inv;
-	}
-	
-	public ItemMeta setMeta (String name, List<String> lore, ItemMeta meta) {
-		meta.setDisplayName(name);
-		List<String> tmp = new ArrayList<String>(); 
-		meta.setLore(lore);
+	public List<String> buildPILore(Player player) { //gets playerInfo lore
+		List<String> tmp = new ArrayList<String>();
 		
-		return meta;
-	}
-	
-	@EventHandler
-	public void onQuestMenuClick(InventoryClickEvent event) {
+		tmp.add(ChatColor.GREEN + "Total XP earned: " + df.getData().getInt("players."+player.getUniqueId()+".totalxp"));
 		
+		
+		return tmp;
 	}
 	
 }

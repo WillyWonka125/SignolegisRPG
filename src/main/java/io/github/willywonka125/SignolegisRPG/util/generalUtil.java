@@ -18,10 +18,14 @@ public class generalUtil implements Listener {
 	@EventHandler
 	public void onPlayerChat(AsyncPlayerChatEvent e) {
 		if (e.getMessage().contains("staff")) {
-			e.setCancelled(true);
-			e.getPlayer().sendMessage(ChatColor.RED + "Asking for staff gets you nowhere.");
+			if (!e.getPlayer().hasPermission("signolegis.bypassfilter")) {
+				e.setCancelled(true);
+				e.getPlayer().sendMessage(ChatColor.RED + "Asking for staff gets you nowhere.");
+			}
 		} if (e.getMessage().contains("MineChat")) {
-			e.setMessage("I'm using a chat app. Hate me.");
+			if (e.getPlayer().hasPermission("signolegis.bypassfilter")) {
+				e.setMessage("I'm using a chat app. Hate me.");
+			}
 		}
 	}
 	

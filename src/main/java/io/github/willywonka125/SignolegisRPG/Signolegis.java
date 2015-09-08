@@ -7,8 +7,9 @@ import java.util.logging.Level;
 import io.github.willywonka125.SignolegisRPG.handlers.ChestHandler;
 import io.github.willywonka125.SignolegisRPG.util.dataFile;
 import io.github.willywonka125.SignolegisRPG.util.generalUtil;
-import io.github.willywonka125.SignolegisRPG.util.inventoryManager;
+import io.github.willywonka125.SignolegisRPG.util.questMaster;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -23,7 +24,6 @@ public class Signolegis extends JavaPlugin  {
 	private ChestHandler ch = null;
 	private dataFile df = null;
 	private Register r = null;
-	private inventoryManager im = null;
 	private Quests q = null;
 	private generalUtil gu = null;
 	
@@ -33,11 +33,14 @@ public class Signolegis extends JavaPlugin  {
 	ChatColor notYet = ChatColor.DARK_RED;
 
 public void onEnable() {
+	
+		getConfig().createSection("menus");
+		getConfig().createSection("test");
+	
 		ch = new ChestHandler(this);
 		df = new dataFile(this);
 		r = new Register(this);
 		q = new Quests(this);
-		im = new inventoryManager(this);
 		gu = new generalUtil(this);
 	
 	   df.saveDefaultData();
@@ -46,8 +49,16 @@ public void onEnable() {
 	   getLogger().info("SignolegisRPG is starting");
 	   getServer().getPluginManager().registerEvents(ch, this);
 	   getServer().getPluginManager().registerEvents(gu, this);
-	   getServer().getPluginManager().registerEvents(im, this);
+	   //getServer().getPluginManager().registerEvents(im, this);
 	   this.saveDefaultConfig();
+	   
+	   if(getServer().getPluginManager().getPlugin("Citizens") == null || getServer().getPluginManager().getPlugin("Citizens").isEnabled() == false) {
+			getLogger().log(Level.SEVERE, "Citizens 2.0 not found or not enabled");
+			getServer().getPluginManager().disablePlugin(this);	
+			return;
+		}
+	   
+	   net.citizensnpcs.api.CitizensAPI.getTraitFactory().registerTrait(net.citizensnpcs.api.trait.TraitInfo.create(questMaster.class).withName("questmaster"));
    }
 
    public void onDisable() {
@@ -75,7 +86,8 @@ public void onEnable() {
    };
    
    
-   public boolean onCommand(CommandSender sender, Command cmd, String commandlabel, String[] args) {
+   @SuppressWarnings("deprecation")
+public boolean onCommand(CommandSender sender, Command cmd, String commandlabel, String[] args) {
 	   if (sender.equals(getServer().getConsoleSender())) {
 		   getLogger().log(Level.WARNING, "The Signolegis plugin can only be used by players.");
 	   } else {
@@ -129,7 +141,11 @@ public void onEnable() {
 				   } else {
 					   
 				   }
+			   } else if (args[0].equalsIgnoreCase("serialize")) {
+				   getConfig().set("test", player.getItemInHand());
+				   player.sendMessage("Block saved in config");
 			   }
+			   
 			   
 			   
 			   
