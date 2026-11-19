@@ -15,18 +15,18 @@ import io.github.willywonka125.SignolegisRPG.util.dataFile;
 
 public class Register {
 	
-	private dataFile df = new dataFile(this); //This allows Register to use dataFile methods
+	private dataFile df; 
 	private ChestHandler ch = null;
 	
 	private Signolegis si = null;
-	public Register (Signolegis instance) { //This allows Signolegis to access Register methods, *NOT* visa versa
+	public Register (Signolegis instance, dataFile datafile) { //This allows Signolegis to access Register methods, *NOT* visa versa
 		si = instance;
+		df = datafile;
 	}
 	public Register(ChestHandler instance) {
 		ch = instance;
 	}
-	
-	
+
 	public void registerLore(String name, ItemStack book, Player sender) {
 		if (isLoreRegistered(name)) {
 			sender.sendMessage(ChatColor.RED + "That lore name has already been registered!");

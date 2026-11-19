@@ -2,6 +2,7 @@ name: SignolegisRPG
 main: io.github.willywonka125.SignolegisRPG.Signolegis
 version: 0.2.5
 depend: [Citizens]
+api-version: '1.21'
 commands:
   signo:
     description: Singolegis administrative command

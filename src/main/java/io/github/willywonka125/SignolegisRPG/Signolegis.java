@@ -12,6 +12,7 @@ import io.github.willywonka125.SignolegisRPG.util.questMaster;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -27,38 +28,49 @@ public class Signolegis extends JavaPlugin  {
 	private Quests q = null;
 	private generalUtil gu = null;
 	
-	
-	ChatColor primary = ChatColor.AQUA;
-	ChatColor secondary = ChatColor.GREEN;
-	ChatColor notYet = ChatColor.DARK_RED;
+	// Theme!
+	ChatColor primaryColor = ChatColor.AQUA;
+	ChatColor secondaryColor = ChatColor.GREEN;
+	ChatColor notYetColor = ChatColor.DARK_RED;
+	ChatColor errorColor = ChatColor.RED;
 
 public void onEnable() {
 	
-		getConfig().createSection("menus");
-		getConfig().createSection("test");
-	
-		ch = new ChestHandler(this);
-		df = new dataFile(this);
-		r = new Register(this);
-		q = new Quests(this);
-		gu = new generalUtil(this);
-	
-	   df.saveDefaultData();
-	   
-	   getCommand("quests").setExecutor((CommandExecutor) q);
-	   getLogger().info("SignolegisRPG is starting");
-	   getServer().getPluginManager().registerEvents(ch, this);
-	   getServer().getPluginManager().registerEvents(gu, this);
-	   //getServer().getPluginManager().registerEvents(im, this);
-	   this.saveDefaultConfig();
-	   
-	   if(getServer().getPluginManager().getPlugin("Citizens") == null || getServer().getPluginManager().getPlugin("Citizens").isEnabled() == false) {
+		//Check first for Citizen
+		if(getServer().getPluginManager().getPlugin("Citizens") == null || getServer().getPluginManager().getPlugin("Citizens").isEnabled() == false) {
 			getLogger().log(Level.SEVERE, "Citizens 2.0 not found or not enabled");
 			getServer().getPluginManager().disablePlugin(this);	
 			return;
 		}
+		
+		//Create config.yml if it nodes not already exist.
+		saveDefaultConfig();
+		
+		//Setup the DataFile next, so constructors can access it.
+		df = new dataFile(this);
+		df.saveDefaultData();
+		
+		//Setup config.yml sections if they are not already present.
+		if (!getConfig().isConfigurationSection("menus")) { getConfig().createSection("menus"); };
+		if (!getConfig().isConfigurationSection("test")) { getConfig().createSection("test"); };
+	
+		// Costructors
+		ch = new ChestHandler(this);
+		r = new Register(this, df);
+		q = new Quests(this);
+		gu = new generalUtil(this);
+	
+		//Register Commands
+		getCommand("quests").setExecutor(q);
+		getLogger().info("SignolegisRPG is starting");
+		getServer().getPluginManager().registerEvents(ch, this);
+		getServer().getPluginManager().registerEvents(gu, this);
+		//getServer().getPluginManager().registerEvents(im, this);
 	   
+	   //Citizens Setup
 	   net.citizensnpcs.api.CitizensAPI.getTraitFactory().registerTrait(net.citizensnpcs.api.trait.TraitInfo.create(questMaster.class).withName("questmaster"));
+	   
+	   getLogger().info("SignolegisRPG has started.");
    }
 
    public void onDisable() {
@@ -78,89 +90,86 @@ public void onEnable() {
 
    
    public String[] help = {
-		   primary + "/sg h,help,?" + secondary + " - Display this help menu.",
-		   primary + "/sg ll,listlores" + secondary + " - List all registered lore books.",
-		   primary + "/sg rl,registerlore <name>" + secondary +" - Register a lore book with [name].",
-		   primary + "/sg gl,getlore <name>" + secondary + " - Retrieves a registered lore.",
-		   notYet + "/sg rc,registerchest <lorename>" + secondary +" - Register the chest you are looking at."
+		   primaryColor + "/sg h,help,?" + secondaryColor + " - Display this help menu.",
+		   primaryColor + "/sg ll,listlores" + secondaryColor + " - List all registered lore books.",
+		   primaryColor + "/sg rl,registerlore <name>" + secondaryColor +" - Register a lore book with [name].",
+		   primaryColor + "/sg gl,getlore <name>" + secondaryColor + " - Retrieves a registered lore.",
+		   notYetColor + "/sg rc,registerchest <lorename>" + secondaryColor +" - Register the chest you are looking at."
    };
    
    
-   @SuppressWarnings("deprecation")
-public boolean onCommand(CommandSender sender, Command cmd, String commandlabel, String[] args) {
-	   if (sender.equals(getServer().getConsoleSender())) {
-		   getLogger().log(Level.WARNING, "The Signolegis plugin can only be used by players.");
-	   } else {
-		  
-		   
-		   Player player = (Player) sender;
-		   
-		   if (args.length == 0 || args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("?")) { //Future support for multiple pages
-			   sender.sendMessage(help);
-		   } else {
-		   
-			   if (args[0].equalsIgnoreCase("registerlore") || args[0].equalsIgnoreCase("rl")) {
-				   if (args.length < 2) {
-					   sender.sendMessage(ChatColor.RED + "You must specify a name!");
-				   } else {
-					   Player plr = (Player) sender;
-					   ItemStack bk = plr.getItemInHand();
-					   if (!bk.getType().equals(Material.WRITTEN_BOOK)) {
-						   sender.sendMessage(ChatColor.RED + "The item in your hand is not a book!");
-					   } else {
-						   r.registerLore(getArgs(args, 1), bk, plr); //Now supports names with spaces!!!
-					   }
-				   }
-				   
-			   } else if (args[0].equalsIgnoreCase("ll") || args[0].equalsIgnoreCase("listlores")) {
-				   sender.sendMessage(r.listLores());
-			   } else if (args[0].equalsIgnoreCase("getlore") || args[0].equalsIgnoreCase("gl")) {
-				   if (args.length < 2) {
-					   sender.sendMessage(ChatColor.RED + "You must specify a name! (Names can have spaces :De)");
-				   } else {
-					   if (r.isLoreRegistered(getArgs(args, 1))) {
-						   Player plr = (Player) sender;
-						   plr.getInventory().addItem(r.getLore(getArgs(args, 1)));
-						   plr.sendMessage(ChatColor.GREEN + "Given lore " + getArgs(args, 1));
-					   }
-					   
-				   }
-			   } else if (args[0].equalsIgnoreCase("registerchest") || args[0].equalsIgnoreCase("rc")) {
-				   if (!(player.getTargetBlock((HashSet<Byte>)null, 100).getType().equals(Material.CHEST))) {
-					   sender.sendMessage(ChatColor.RED + "You are not looking at a chest.");
-				   } else {
-					   if (args.length < 3) {
-						   sender.sendMessage(ChatColor.RED + "More arguments needed. Usage: /sg rc <chestname> <lorename>");
-					   } else {						   
-						   r.registerChest(player.getTargetBlock((HashSet<Byte>)null, 100).getLocation(), player, getArgs(args, 2), args[1]);				  
-					   }
-				   }
-			   } else if (args[0].equalsIgnoreCase("deletechest") || args[0].equalsIgnoreCase("dc")) {
-				   if (!(player.getTargetBlock((HashSet<Byte>)null, 100).getType().equals(Material.CHEST))) {
-					   sender.sendMessage(ChatColor.RED + "You are not looking at a chest.");
-				   } else {
-					   
-				   }
-			   } else if (args[0].equalsIgnoreCase("serialize")) {
-				   getConfig().set("test", player.getItemInHand());
-				   player.sendMessage("Block saved in config");
-			   }
-			   
-			   
-			   
-			   
-			   
-			   else { //Put code to be executed on empty/unknown args here
-				   sender.sendMessage(help);
-			   }
-			   
-			   
-			   
-			   
-		   }
-	   }
-	   
-	   return true;
+   @Override
+   public boolean onCommand(CommandSender sender, Command cmd, String commandlabel, String[] args) {
+       if (!(sender instanceof Player player)) {
+           sender.sendMessage("The Signolegis plugin can only be used by players.");
+           return true;
+       }
+
+       // Empty args, "help", "?" and unknown subcommands all fall through to default
+       String sub = args.length > 0 ? args[0].toLowerCase() : "";
+
+       switch (sub) {
+           case "registerlore", "rl" -> {
+               if (args.length < 2) {
+                   player.sendMessage(ChatColor.RED + "You must specify a name!");
+                   return true;
+               }
+               ItemStack book = player.getInventory().getItemInMainHand();
+               if (book.getType() != Material.WRITTEN_BOOK) {
+                   player.sendMessage(ChatColor.RED + "The item in your hand is not a book!");
+                   return true;
+               }
+               r.registerLore(getArgs(args, 1), book, player); // Supports names with spaces
+           }
+
+           case "listlores", "ll" -> player.sendMessage(r.listLores());
+
+           case "getlore", "gl" -> {
+               if (args.length < 2) {
+                   player.sendMessage(ChatColor.RED + "You must specify a name! (Names can have spaces :D)");
+                   return true;
+               }
+               String loreName = getArgs(args, 1);
+               if (!r.isLoreRegistered(loreName)) {
+                   player.sendMessage(ChatColor.RED + "No lore registered with that name.");
+                   return true;
+               }
+               player.getInventory().addItem(r.getLore(loreName));
+               player.sendMessage(ChatColor.GREEN + "Given lore " + loreName);
+           }
+
+           case "registerchest", "rc" -> {
+               if (args.length < 3) {
+                   player.sendMessage(ChatColor.RED + "More arguments needed. Usage: /sg rc <chestname> <lorename>");
+                   return true;
+               }
+               Block target = player.getTargetBlock(null, 100);
+               if (target.getType() != Material.CHEST) {
+                   player.sendMessage(ChatColor.RED + "You are not looking at a chest.");
+                   return true;
+               }
+               r.registerChest(target.getLocation(), player, getArgs(args, 2), args[1]);
+           }
+
+           case "deletechest", "dc" -> {
+               Block target = player.getTargetBlock(null, 100);
+               if (target.getType() != Material.CHEST) {
+                   player.sendMessage(ChatColor.RED + "You are not looking at a chest.");
+                   return true;
+               }
+               // TODO: delete the chest
+           }
+
+           case "serialize" -> {
+               getConfig().set("test", player.getInventory().getItemInMainHand());
+               saveConfig();
+               player.sendMessage("Block saved in config");
+           }
+
+           default -> player.sendMessage(help); // Future support for multiple pages
+       }
+
+       return true;
    }
    
    

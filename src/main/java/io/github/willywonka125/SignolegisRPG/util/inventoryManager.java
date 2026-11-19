@@ -32,15 +32,15 @@ public class inventoryManager implements Listener {
 		
 		if (!df.getData().isConfigurationSection("players." + player.getUniqueId())) {
 			
-			ItemStack playerInfo = new ItemStack(Material.SKULL_ITEM, 1, (short) 3); //Build playerInfo
-			SkullMeta skullmeat = (SkullMeta) playerInfo.getItemMeta();
-			skullmeat.setOwner(player.getName()); 
+			ItemStack playerInfo = new ItemStack(Material.PLAYER_HEAD, 1); //Build playerInfo
+			SkullMeta skullmeta = (SkullMeta) playerInfo.getItemMeta();
+			skullmeta.setOwningPlayer(player); 
 			List<String> lore = new ArrayList<String>();
 			lore.add(ChatColor.GREEN + "Total XP earned: 0");
 			lore.add(ChatColor.GREEN + "Available XP: 0");
-			skullmeat.setLore(lore);
-			skullmeat.setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Total quests completed: 0");
-			playerInfo.setItemMeta(skullmeat);
+			skullmeta.setLore(lore);
+			skullmeta.setDisplayName(ChatColor.GOLD + "" + ChatColor.BOLD + "Total quests completed: 0");
+			playerInfo.setItemMeta(skullmeta);
 			tmp.setItem(4, playerInfo);
 			
 			
