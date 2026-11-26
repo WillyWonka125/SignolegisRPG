@@ -1,13 +1,17 @@
 package io.github.willywonka125.SignolegisRPG;
 
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import io.github.willywonka125.SignolegisRPG.handlers.ChestHandler;
-import io.github.willywonka125.SignolegisRPG.util.dataFile;
-import io.github.willywonka125.SignolegisRPG.util.generalUtil;
-import io.github.willywonka125.SignolegisRPG.util.questMaster;
+import io.github.willywonka125.SignolegisRPG.util.PendingCommand;
+import io.github.willywonka125.SignolegisRPG.util.DataFile;
+import io.github.willywonka125.SignolegisRPG.util.GeneralUtil;
+import io.github.willywonka125.SignolegisRPG.util.QuestNPC;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -23,16 +27,21 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class Signolegis extends JavaPlugin  {
 	
 	private ChestHandler ch = null;
-	private dataFile df = null;
+	private DataFile df = null;
 	private Register r = null;
 	private Quests q = null;
-	private generalUtil gu = null;
+	private GeneralUtil gu = null;
 	
 	// Theme!
 	ChatColor primaryColor = ChatColor.AQUA;
 	ChatColor secondaryColor = ChatColor.GREEN;
 	ChatColor notYetColor = ChatColor.DARK_RED;
 	ChatColor errorColor = ChatColor.RED;
+	
+	// Pending Commands
+	private final HashMap<UUID, PendingCommand> pendingCommands = new HashMap<>();
+	private final Set<UUID> confirmingPlayers = new HashSet<>();
+	private static final long CONFIRM_TIMEOUT_MS = 30_000;
 
 public void onEnable() {
 	
@@ -47,7 +56,7 @@ public void onEnable() {
 		saveDefaultConfig();
 		
 		//Setup the DataFile next, so constructors can access it.
-		df = new dataFile(this);
+		df = new DataFile(this);
 		df.saveDefaultData();
 		
 		//Setup config.yml sections if they are not already present.
@@ -55,10 +64,10 @@ public void onEnable() {
 		if (!getConfig().isConfigurationSection("test")) { getConfig().createSection("test"); };
 	
 		// Costructors
-		ch = new ChestHandler(this);
 		r = new Register(this, df);
 		q = new Quests(this);
-		gu = new generalUtil(this);
+		gu = new GeneralUtil(this);
+		ch = new ChestHandler(this);
 	
 		//Register Commands
 		getCommand("quests").setExecutor(q);
@@ -68,7 +77,7 @@ public void onEnable() {
 		//getServer().getPluginManager().registerEvents(im, this);
 	   
 	   //Citizens Setup
-	   net.citizensnpcs.api.CitizensAPI.getTraitFactory().registerTrait(net.citizensnpcs.api.trait.TraitInfo.create(questMaster.class).withName("questmaster"));
+	   net.citizensnpcs.api.CitizensAPI.getTraitFactory().registerTrait(net.citizensnpcs.api.trait.TraitInfo.create(QuestNPC.class).withName("QuestNPC"));
 	   
 	   getLogger().info("SignolegisRPG has started.");
    }
@@ -94,6 +103,7 @@ public void onEnable() {
 		   primaryColor + "/sg ll,listlores" + secondaryColor + " - List all registered lore books.",
 		   primaryColor + "/sg rl,registerlore <name>" + secondaryColor +" - Register a lore book with [name].",
 		   primaryColor + "/sg gl,getlore <name>" + secondaryColor + " - Retrieves a registered lore.",
+		   primaryColor + "/sg dl,deletelore <name>" + secondaryColor + " - Deletes a registered lore.",
 		   notYetColor + "/sg rc,registerchest <lorename>" + secondaryColor +" - Register the chest you are looking at."
    };
    
@@ -137,18 +147,39 @@ public void onEnable() {
                player.getInventory().addItem(r.getLore(loreName));
                player.sendMessage(ChatColor.GREEN + "Given lore " + loreName);
            }
+           
+           // Utilizes PendingCommand
+           case "deletelore", "dl" -> {
+    		   if (args.length < 2) {
+                   player.sendMessage(ChatColor.RED + "You must specify a name! (Names can have spaces :D)");
+                   return true;
+               }
+        	   //If player has confirmed command, let it run.
+        	   if (confirmingPlayers.contains(player.getUniqueId())) {
+            	   String loreName = getArgs(args, 1);
+            	   player.sendMessage(r.deleteLore(loreName));
+            	   confirmingPlayers.remove(player.getUniqueId());
+            	   return true;
+        	   } else {
+        		   //We need to create a PendingCommand
+        		   String commandAsString = args.length > 0 ? commandlabel + " " + String.join(" ", args) : commandlabel;
+        		   PendingCommand pendingcmd = new PendingCommand(player.getUniqueId(), System.currentTimeMillis(), commandAsString);
+        		   getLogger().log(Level.INFO, "Creating PendingCommand with command string: " + commandAsString);
+        		   pendingCommands.put(player.getUniqueId(), pendingcmd);
+        		   player.sendMessage(ChatColor.RED + "You are about to delete a lore. This cannot be undone.");
+        		   player.sendMessage(ChatColor.RED + "To confirm, run /sg confirm.");
+        		   return true;
+        	   }
+        	   
+           }
 
            case "registerchest", "rc" -> {
-               if (args.length < 3) {
-                   player.sendMessage(ChatColor.RED + "More arguments needed. Usage: /sg rc <chestname> <lorename>");
+               if (args.length < 2) {
+                   player.sendMessage(ChatColor.RED + "More arguments needed. Usage: /sg rc <chestname>");
                    return true;
                }
                Block target = player.getTargetBlock(null, 100);
-               if (target.getType() != Material.CHEST) {
-                   player.sendMessage(ChatColor.RED + "You are not looking at a chest.");
-                   return true;
-               }
-               r.registerChest(target.getLocation(), player, getArgs(args, 2), args[1]);
+               player.sendMessage(r.registerChest(target, player, args[1]));
            }
 
            case "deletechest", "dc" -> {
@@ -159,11 +190,44 @@ public void onEnable() {
                }
                // TODO: delete the chest
            }
+           
+           case "listchests", "lc" -> {
+        	   player.sendMessage(r.listChests());
+           }
 
            case "serialize" -> {
                getConfig().set("test", player.getInventory().getItemInMainHand());
                saveConfig();
                player.sendMessage("Block saved in config");
+           }
+           
+           case "confirm" -> {
+        	   
+        	   //Get the PendingCommand and remove it in one line!.
+       	    	PendingCommand pcmd = pendingCommands.remove(player.getUniqueId());
+        	   
+        	   //Check if a PendingCommand can be found for the player's UUID
+        	   //Need not handle the case where >1 PendingCommands can be found, as we will disallow.
+        	   if (pcmd == null) {
+        		   player.sendMessage(ChatColor.DARK_RED + "You have no pending commands.");
+        		   return true;
+        	   }
+   
+        	   //Check timestamp first
+        	   if (System.currentTimeMillis() - pcmd.getTimestamp() > CONFIRM_TIMEOUT_MS) {
+        		   player.sendMessage(ChatColor.DARK_RED + "Command expired. Please try again.");
+        		   return true;
+        	   }
+        	   
+        	   //We can run the command!
+        	   confirmingPlayers.add(player.getUniqueId());
+        	   Bukkit.dispatchCommand(sender, pcmd.getCommand());
+        	   return true;
+           }
+           
+           case "testcmd" -> {
+        	   player.sendMessage(pendingCommands.toString());
+        	   return true;
            }
 
            default -> player.sendMessage(help); // Future support for multiple pages
@@ -172,5 +236,8 @@ public void onEnable() {
        return true;
    }
    
+   //Getters!
+   public DataFile getDataFile() { return df; }
+   public Register getRegister() { return r; }
    
 }

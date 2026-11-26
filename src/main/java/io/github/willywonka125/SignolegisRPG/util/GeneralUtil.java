@@ -7,11 +7,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
-public class generalUtil implements Listener {
+public class GeneralUtil implements Listener {
 	
 	Signolegis si = null;
 	
-	public generalUtil(Signolegis signolegis) {
+	public GeneralUtil(Signolegis signolegis) {
 		si = signolegis;
 	}
 

@@ -3,7 +3,7 @@ package io.github.willywonka125.SignolegisRPG;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
-import io.github.willywonka125.SignolegisRPG.util.inventoryManager;
+import io.github.willywonka125.SignolegisRPG.util.InventoryManager;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 public class Quests implements CommandExecutor {
 	
 	Signolegis si = null;
-	inventoryManager im = new inventoryManager(this);
+	InventoryManager im = new InventoryManager(this);
 	
 	public Quests (Signolegis instance) {
 		si = instance;

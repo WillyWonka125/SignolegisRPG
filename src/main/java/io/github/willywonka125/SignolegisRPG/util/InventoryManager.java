@@ -14,15 +14,15 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 import io.github.willywonka125.SignolegisRPG.Quests;
 
-public class inventoryManager implements Listener {
+public class InventoryManager implements Listener {
 	
 	//Player stats will be saved under players.playerName.statName
 	//Menus will be built from those stats to keep the size of data.yml down
 	
-	private dataFile df = new dataFile(this);
+	private DataFile df = new DataFile(this);
 	
 	static Quests q = null;
-	public inventoryManager(Quests instance) {
+	public InventoryManager(Quests instance) {
 		q = instance;
 	}
 	

@@ -13,21 +13,21 @@ import io.github.willywonka125.SignolegisRPG.Signolegis;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration; 
 
-public class dataFile { //Contains methods to retrieve and alter data
+public class DataFile { //Contains methods to retrieve and alter data
 	
 	static Signolegis si = null;
 	static Register reg = null;
-	static inventoryManager im = null;
+	static InventoryManager im = null;
 	
-	public dataFile (Signolegis instance) {
+	public DataFile (Signolegis instance) {
 		si = instance;
 	}
 	
-	public dataFile (Register instance) {
+	public DataFile (Register instance) {
 		reg = instance;
 	}
 	
-	public dataFile (inventoryManager instance) {
+	public DataFile (InventoryManager instance) {
 		im = instance;
 	}
 

@@ -13,13 +13,13 @@ import net.citizensnpcs.api.event.NPCLeftClickEvent;
 import net.citizensnpcs.api.persistence.Persist;
 import net.citizensnpcs.api.trait.Trait;
 
-public class questMaster extends Trait {
+public class QuestNPC extends Trait {
 	
 	//Begin with a method to enter a player into create mode. Must be able to remember which step
 	//the player is on. 
 	
-	public questMaster() {
-		super("questMaster");
+	public QuestNPC() {
+		super("QuestNPC");
 	}
 	
 	ChatColor gn = ChatColor.GREEN;
