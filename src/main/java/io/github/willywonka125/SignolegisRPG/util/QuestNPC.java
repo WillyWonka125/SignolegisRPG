@@ -37,8 +37,8 @@ public class QuestNPC extends Trait {
 	@Persist String dialogue2; //Incomplete message
 	@Persist String dialogue3; //Player complete quest message
 	@Persist String dialogue4; //Post-quest interact message
-	@Persist ArrayList<ItemStack> requirements;
-	@Persist ArrayList<ItemStack> rewards;
+	@Persist ArrayList<ItemStack> requirements = new ArrayList<ItemStack>();
+	@Persist ArrayList<ItemStack> rewards = new ArrayList<ItemStack>();
 	
 	String[] tmp0 = {
 			gn + "Please enter into chat the dialoge to say when the player firsts interacts with the NPC.",

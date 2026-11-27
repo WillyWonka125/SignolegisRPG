@@ -104,7 +104,8 @@ public void onEnable() {
 		   primaryColor + "/sg rl,registerlore <name>" + secondaryColor +" - Register a lore book with [name].",
 		   primaryColor + "/sg gl,getlore <name>" + secondaryColor + " - Retrieves a registered lore.",
 		   primaryColor + "/sg dl,deletelore <name>" + secondaryColor + " - Deletes a registered lore.",
-		   notYetColor + "/sg rc,registerchest <lorename>" + secondaryColor +" - Register the chest you are looking at."
+		   primaryColor + "/sg rc,registerchest <lorename>" + secondaryColor +" - Register the chest you are looking at.",
+		   notYetColor + "/sg dc,deletechest" + secondaryColor + " - Delete (unregister) the chest you are looking at."
    };
    
    
@@ -188,7 +189,20 @@ public void onEnable() {
                    player.sendMessage(ChatColor.RED + "You are not looking at a chest.");
                    return true;
                }
-               // TODO: delete the chest
+               if (confirmingPlayers.contains(player.getUniqueId())) {
+            	   player.sendMessage(r.deleteChest(target, player));
+            	   confirmingPlayers.remove(player.getUniqueId());
+            	   return true;
+               } else {
+        		   //We need to create a PendingCommand
+        		   String commandAsString = args.length > 0 ? commandlabel + " " + String.join(" ", args) : commandlabel;
+        		   PendingCommand pendingcmd = new PendingCommand(player.getUniqueId(), System.currentTimeMillis(), commandAsString);
+        		   getLogger().log(Level.INFO, "Creating PendingCommand with command string: " + commandAsString);
+        		   pendingCommands.put(player.getUniqueId(), pendingcmd);
+        		   player.sendMessage(ChatColor.RED + "You are about to delete a chest. This cannot be undone.");
+        		   player.sendMessage(ChatColor.RED + "To confirm, run /sg confirm. You must still be looking at the chest.");
+        		   return true;
+               }
            }
            
            case "listchests", "lc" -> {

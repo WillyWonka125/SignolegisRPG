@@ -129,10 +129,14 @@ public class Register {
 		}
 	};
 	
-	public void deleteChest(Location loc, Player player) {
-		if (!(isChestRegistered(serializeLoc(loc)))) {
-			df.getData().set("chests." + serializeLoc(loc), null); //Lets hope this works
-			player.sendMessage(ChatColor.GREEN + "Removed chest at " + serializeLoc(loc));
+	public String deleteChest(Block chest, Player player) {
+		if (!(chest.getState() instanceof Chest || chest.getState() instanceof DoubleChest)) {
+			return "You are not looking at a chest. Material: " + chest.getBlockData().getMaterial();
+		} else {
+			df.getData().set("chests." + serializeLoc(chest.getLocation()), null);
+			df.saveDataFile();
+
+			return ChatColor.GREEN + "Deleted chest.";
 		}
 	}
 	
