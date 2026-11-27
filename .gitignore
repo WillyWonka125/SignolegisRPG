@@ -1,3 +1,28 @@
+# =========================
+# Whitelist: only track what's needed to
+# import the Maven project into Eclipse and compile it.
+# Everything at the top level is ignored unless listed below.
+# =========================
+/*
+
+# Needed to import and build
+!/pom.xml
+!/src/
+
+# Standard repo files
+!/LICENSE
+!/README.md
+!/.gitignore
+!/.gitattributes
+
+# =========================
+# Always ignore (even inside src/)
+# =========================
+
+# Build output
+target/
+*.class
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
@@ -17,13 +42,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# =========================
-# Operating System Files
-# =========================
-
 # OSX
-# =========================
-
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -41,4 +60,3 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-/target/
