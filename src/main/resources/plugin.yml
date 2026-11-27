@@ -8,6 +8,7 @@ commands:
     description: Singolegis administrative command
     usage: /signo help
     aliases: [sg, sig, si]
+    permission: signolegis.admin
   quests:
     description: Signolegis quests command
     usage: /quests
@@ -18,6 +19,10 @@ permissions:
     description: Gives access to all signolegis commands
     children:
       signolegis.bypassfilter: true
+      signolegis.admin: true
+  signolegis.admin:
+    description: Gives access to admin-restricted Signolegis commands.
+    default: op
   quests.*:
     description: Gives access to all quests features and commands
     children:

@@ -25,7 +25,7 @@ public class ChestHandler implements Listener {
 	private Signolegis si;
 	/**
 	 * EventHandler for chest opening and breaking.
-	 * @param instance Signolegis main class.
+	 * @param instance Signolegis plugin main class.
 	 */
 	public ChestHandler(Signolegis instance) {
 		si = instance;
@@ -33,38 +33,27 @@ public class ChestHandler implements Listener {
 		reg = si.getRegister();
 	}
 	
-	
-	
 	@EventHandler
 	public void onInventoryOpenEvent(InventoryOpenEvent e) {
-		if (e.getInventory().getHolder() instanceof Chest || e.getInventory().getHolder() instanceof DoubleChest) {
-			InventoryHolder holder = e.getInventory().getHolder();
-			Location loc = null;
-			if (holder instanceof Chest) {
-				loc = ((Chest) holder).getLocation();
-			} else if (holder instanceof DoubleChest) {
-				loc = ((DoubleChest) holder).getLocation();
-			}
-			if (loc == null) { return; } // Not sure why this would be the case but fail silently if so.
-			si.getLogger().info("Opened chest location: " + reg.serializeLoc(loc));
-			if (reg.isChestRegistered(holder)) {
-				e.getPlayer().sendMessage(ChatColor.BLUE + "You have opened a registered chest!");
-				if (!(e.getInventory().contains(reg.getChestLore(loc)))) {
-					if (reg.getChestLore(loc) != null){
-						e.getInventory().setItem(9, reg.getChestLore(loc));
-					} else if (reg.loadChestInventory(reg.serializeLoc(loc)) != null) {
-						restoreChestInventory(e.getInventory(), reg.serializeLoc(loc));
-					} else {
-						e.getPlayer().sendMessage(ChatColor.RED + "No lore or inventory found for this chest.");
-					}
-				} 
-			}
+		//Get InventoryHolder and check if this is a registered chest.
+		InventoryHolder holder = e.getInventory().getHolder();
+		String key = reg.findRegisteredKey(holder); //Returns null if no chest is registered, so this handles non-chest inventories implicitly.
+		if (key != null) {
+			// Serve the player the saved chest inventory.
+			restoreChestInventory(holder.getInventory(), reg.findRegisteredKey(holder));
 		}
 	}
 	
 	@EventHandler
 	public void onBlockBreakEvent(BlockBreakEvent e) {
 		e.getPlayer().sendMessage("Block broken at " + e.getBlock().getLocation());
+		
+		// If this is a chest...
+//		if (e.getBlock().getState() instanceof Chest || e.getBlock().getState() instanceof DoubleChest) {
+//			//And if it's a registered chest...
+//			//if ()
+//		}
+		
 		return;
 	}
 	

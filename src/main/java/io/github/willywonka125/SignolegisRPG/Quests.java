@@ -1,11 +1,8 @@
 package io.github.willywonka125.SignolegisRPG;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Level;
-
 import io.github.willywonka125.SignolegisRPG.util.InventoryManager;
 
 import org.bukkit.ChatColor;

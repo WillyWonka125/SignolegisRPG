@@ -13,12 +13,10 @@ import io.github.willywonka125.SignolegisRPG.util.DataFile;
 import io.github.willywonka125.SignolegisRPG.util.GeneralUtil;
 import io.github.willywonka125.SignolegisRPG.util.QuestNPC;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -40,7 +38,6 @@ public class Signolegis extends JavaPlugin  {
 	
 	// Pending Commands
 	private final HashMap<UUID, PendingCommand> pendingCommands = new HashMap<>();
-	private final Set<UUID> confirmingPlayers = new HashSet<>();
 	private static final long CONFIRM_TIMEOUT_MS = 30_000;
 
 public void onEnable() {
@@ -155,23 +152,24 @@ public void onEnable() {
                    player.sendMessage(ChatColor.RED + "You must specify a name! (Names can have spaces :D)");
                    return true;
                }
-        	   //If player has confirmed command, let it run.
-        	   if (confirmingPlayers.contains(player.getUniqueId())) {
-            	   String loreName = getArgs(args, 1);
-            	   player.sendMessage(r.deleteLore(loreName));
-            	   confirmingPlayers.remove(player.getUniqueId());
-            	   return true;
-        	   } else {
-        		   //We need to create a PendingCommand
-        		   String commandAsString = args.length > 0 ? commandlabel + " " + String.join(" ", args) : commandlabel;
-        		   PendingCommand pendingcmd = new PendingCommand(player.getUniqueId(), System.currentTimeMillis(), commandAsString);
-        		   getLogger().log(Level.INFO, "Creating PendingCommand with command string: " + commandAsString);
-        		   pendingCommands.put(player.getUniqueId(), pendingcmd);
-        		   player.sendMessage(ChatColor.RED + "You are about to delete a lore. This cannot be undone.");
-        		   player.sendMessage(ChatColor.RED + "To confirm, run /sg confirm.");
-        		   return true;
-        	   }
-        	   
+    		   
+    		   String loreName = getArgs(args, 1);
+    		   if (!r.isLoreRegistered(loreName)) {
+    			   player.sendMessage(ChatColor.RED + "No lore registered with that name.");
+                   return true;
+    		   }
+
+    		   Runnable action = () -> {
+    			   player.sendMessage(r.deleteLore(loreName));
+    		   };
+    		   PendingCommand pcmd = pendingCommands.put(player.getUniqueId(), 
+    				   new PendingCommand(player.getUniqueId(), System.currentTimeMillis(), action, "delete lore " + loreName));
+    		   if (pcmd != null) {
+    			   player.sendMessage(primaryColor + "Previous action " + secondaryColor + pcmd.getDescription() + primaryColor + " was replaced.");
+    		   }
+    		   player.sendMessage(ChatColor.RED + "You are about to delete a lore. This cannot be undone.");
+    		   player.sendMessage(ChatColor.RED + "To confirm, run /sg confirm.");
+    		   return true;
            }
 
            case "registerchest", "rc" -> {
@@ -183,26 +181,32 @@ public void onEnable() {
                player.sendMessage(r.registerChest(target, player, args[1]));
            }
 
+           //Utilizes PendingCommand
            case "deletechest", "dc" -> {
                Block target = player.getTargetBlock(null, 100);
-               if (target.getType() != Material.CHEST) {
+               if (target.getType() != Material.CHEST && target.getType() != Material.TRAPPED_CHEST) {
                    player.sendMessage(ChatColor.RED + "You are not looking at a chest.");
                    return true;
                }
-               if (confirmingPlayers.contains(player.getUniqueId())) {
-            	   player.sendMessage(r.deleteChest(target, player));
-            	   confirmingPlayers.remove(player.getUniqueId());
+               if (!r.isChestRegistered(target)) {
+            	   player.sendMessage(ChatColor.RED + "This chest is not registered.");
             	   return true;
-               } else {
-        		   //We need to create a PendingCommand
-        		   String commandAsString = args.length > 0 ? commandlabel + " " + String.join(" ", args) : commandlabel;
-        		   PendingCommand pendingcmd = new PendingCommand(player.getUniqueId(), System.currentTimeMillis(), commandAsString);
-        		   getLogger().log(Level.INFO, "Creating PendingCommand with command string: " + commandAsString);
-        		   pendingCommands.put(player.getUniqueId(), pendingcmd);
-        		   player.sendMessage(ChatColor.RED + "You are about to delete a chest. This cannot be undone.");
-        		   player.sendMessage(ChatColor.RED + "To confirm, run /sg confirm. You must still be looking at the chest.");
-        		   return true;
                }
+               
+               String registeredChestName = r.getChestName(target);
+               
+               
+               Runnable action = () -> {
+            	   player.sendMessage(r.deleteChest(target, player));
+               };
+               PendingCommand pcmd = pendingCommands.put(player.getUniqueId(), 
+            		   new PendingCommand(player.getUniqueId(), System.currentTimeMillis(), action, "delete chest " + registeredChestName));
+               if (pcmd != null) {
+            	   player.sendMessage(primaryColor + "Previous action " + secondaryColor + pcmd.getDescription() + primaryColor + " was replaced.");
+               }
+    		   player.sendMessage(ChatColor.RED + "You are about to delete a chest. This cannot be undone.");
+    		   player.sendMessage(ChatColor.RED + "To confirm, run /sg confirm.");
+    		   return true;
            }
            
            case "listchests", "lc" -> {
@@ -221,7 +225,6 @@ public void onEnable() {
        	    	PendingCommand pcmd = pendingCommands.remove(player.getUniqueId());
         	   
         	   //Check if a PendingCommand can be found for the player's UUID
-        	   //Need not handle the case where >1 PendingCommands can be found, as we will disallow.
         	   if (pcmd == null) {
         		   player.sendMessage(ChatColor.DARK_RED + "You have no pending commands.");
         		   return true;
@@ -233,9 +236,8 @@ public void onEnable() {
         		   return true;
         	   }
         	   
-        	   //We can run the command!
-        	   confirmingPlayers.add(player.getUniqueId());
-        	   Bukkit.dispatchCommand(sender, pcmd.getCommand());
+        	   player.sendMessage(primaryColor + "Confirmed: " + secondaryColor + pcmd.getDescription());
+        	   pcmd.getCommand().run();
         	   return true;
            }
            
