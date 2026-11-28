@@ -3,6 +3,8 @@
 
 #Please note that any changes made to this file will not be accepted unless the server is *NOT* running.
 
+dataversion: 1
+
 lores:
   
 chests:

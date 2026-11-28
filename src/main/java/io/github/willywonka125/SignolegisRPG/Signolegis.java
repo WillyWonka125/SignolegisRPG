@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import io.github.willywonka125.SignolegisRPG.chests.ChestRegister;
 import io.github.willywonka125.SignolegisRPG.handlers.ChestHandler;
 import io.github.willywonka125.SignolegisRPG.util.PendingCommand;
 import io.github.willywonka125.SignolegisRPG.util.DataFile;
@@ -28,6 +29,7 @@ public class Signolegis extends JavaPlugin  {
 	private Register r = null;
 	private Quests q = null;
 	private GeneralUtil gu = null;
+	private ChestRegister cr = null;
 	
 	// Theme!
 	ChatColor primaryColor = ChatColor.AQUA;
@@ -60,6 +62,7 @@ public void onEnable() {
 		if (!getConfig().isConfigurationSection("test")) { getConfig().createSection("test"); };
 	
 		// Costructors
+		cr = new ChestRegister(this, df);
 		r = new Register(this, df);
 		q = new Quests(this);
 		gu = new GeneralUtil(this);
@@ -74,6 +77,9 @@ public void onEnable() {
 	   
 	   //Citizens Setup
 	   net.citizensnpcs.api.CitizensAPI.getTraitFactory().registerTrait(net.citizensnpcs.api.trait.TraitInfo.create(QuestNPC.class).withName("QuestNPC"));
+	   
+	   //Load chests
+	   cr.loadAll();
 	   
 	   getLogger().info("SignolegisRPG has started.");
    }
@@ -243,12 +249,6 @@ public void onEnable() {
            case "listchests", "lc" -> {
         	   player.sendMessage(r.listChests());
            }
-
-           case "serialize" -> {
-               getConfig().set("test", player.getInventory().getItemInMainHand());
-               saveConfig();
-               player.sendMessage("Block saved in config");
-           }
            
            case "confirm" -> {
         	   
@@ -273,7 +273,7 @@ public void onEnable() {
            }
            
            case "testcmd" -> {
-        	   player.sendMessage(pendingCommands.toString());
+        	   cr.loadAll();
         	   return true;
            }
 
@@ -286,5 +286,6 @@ public void onEnable() {
    //Getters!
    public DataFile getDataFile() { return df; }
    public Register getRegister() { return r; }
+   public ChestRegister getChestRegister () { return cr; }
    
 }

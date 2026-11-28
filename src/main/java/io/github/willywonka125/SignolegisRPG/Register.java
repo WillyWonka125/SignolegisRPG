@@ -22,6 +22,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
+import io.github.willywonka125.SignolegisRPG.chests.ChestRegister;
 import io.github.willywonka125.SignolegisRPG.handlers.ChestHandler;
 import io.github.willywonka125.SignolegisRPG.util.DataFile;
 
@@ -32,12 +33,14 @@ public class Register {
 	
 	private DataFile df; 
 	private ChestHandler ch = null;
+	private ChestRegister cr = null;
 	
 	private Signolegis si = null;
 	
 	public Register (Signolegis instance, DataFile datafile) { //This allows Signolegis to access Register methods, *NOT* visa versa
 		si = instance;
 		df = datafile;
+		cr = si.getChestRegister();
 	}
 	public Register(ChestHandler instance) {
 		ch = instance;
@@ -117,7 +120,8 @@ public class Register {
 		String key = serializeLoc(chest.getLocation());
 		df.getData().set("chests." + key + ".name", name); //Set the Name
 		df.saveDataFile();
-
+		cr.loadAll();
+		
 		// Now save its inventory
 		Inventory inv = ((Chest) chest.getState()).getInventory();
 		saveChestInventory(key, inv);
@@ -135,7 +139,8 @@ public class Register {
 		
 		df.getData().set("chests." + findRegisteredKey(chest), null);
 		df.saveDataFile();
-
+		cr.loadAll();
+		
 		return ChatColor.GREEN + "Deleted chest.";
 
 	}
@@ -153,6 +158,7 @@ public class Register {
 		//There is exactly 1 chest with this name! Delete it.
 		df.getData().set("chests." + keys.get(0), null);
 		df.saveDataFile();
+		cr.loadAll();
 		return ChatColor.GREEN + "Deleted chest " + name;
 	}
 	
@@ -231,12 +237,12 @@ public class Register {
 	// Utility methods
 	
 	/**
-	 * Checks if a chest at loc is registered. 
-	 * @param loc Serialized string location of the chest (world,x,y,z)
-	 * @return true if loc is a registered chest location, false if no registered chest at location.
+	 * Checks if a chest with key is registered. 
+	 * @param key Serialized string location of the chest (world,x,y,z)
+	 * @return true if key is a registered chest location, false if no registered chest with this key.
 	 */
-	private boolean isKeyRegistered(String loc) {
-		return df.getData().isConfigurationSection("chests." + loc);
+	private boolean isKeyRegistered(String key) {
+		return cr.isRegistered(key);
 	}
 	
 	/**

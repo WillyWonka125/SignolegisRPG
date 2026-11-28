@@ -42,7 +42,7 @@ public class ChestHandler implements Listener {
 	
 	@EventHandler
 	public void onBlockBreakEvent(BlockBreakEvent e) {
-		e.getPlayer().sendMessage("Block broken at " + e.getBlock().getLocation());
+		//e.getPlayer().sendMessage("Block broken at " + e.getBlock().getLocation());
 		
 		// If this is a chest...
 //		if (e.getBlock().getState() instanceof Chest || e.getBlock().getState() instanceof DoubleChest) {
