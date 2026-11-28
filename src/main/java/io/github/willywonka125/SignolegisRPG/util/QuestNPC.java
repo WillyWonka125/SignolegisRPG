@@ -102,7 +102,7 @@ public class QuestNPC extends Trait {
 	
 	@EventHandler
 	public void onChat (AsyncPlayerChatEvent e) {
-		if (e.getPlayer().getUniqueId().equals(createPlayer.getUniqueId()) || inCreate == true) { //May have to switch to name checking
+		if (e.getPlayer().getUniqueId().equals(createPlayer.getUniqueId()) && inCreate == true) { //May have to switch to name checking
 			if (stepNumber == 1) { //Set initial message
 				dialogue1 = e.getMessage();
 				e.setCancelled(true);

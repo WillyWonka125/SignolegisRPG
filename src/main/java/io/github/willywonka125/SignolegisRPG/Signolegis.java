@@ -2,8 +2,7 @@ package io.github.willywonka125.SignolegisRPG;
 
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -86,13 +85,20 @@ public void onEnable() {
 	   getLogger().info("However, you may do /sg reload to bypass this.");
    }
    
-   public String getArgs(String[] args, int num){ //You can use a method if you want
+   /**
+    * Stitches together String[] elements, beginning with index num, and returns them as a space-separated string. 
+    * Useful for multi-word names.
+    * @param args The String[] object to combine.
+    * @param num Starting index 
+    * @return Space-separated, combined args.
+    */
+   public String getArgs(String[] args, int num){ 
 	    StringBuilder sb = new StringBuilder(); //We make a String Builder
 	    for(int i = num; i < args.length; i++) { //We get all the arguments with a for loop
 	        sb.append(args[i]).append(" "); //We add the argument and the space
 	    }
 	    return sb.toString().trim(); //We return the message
-	} //Might move this to a separate util class eventually
+	} 
 
    
    public String[] help = {
@@ -101,8 +107,8 @@ public void onEnable() {
 		   primaryColor + "/sg rl,registerlore <name>" + secondaryColor +" - Register a lore book with [name].",
 		   primaryColor + "/sg gl,getlore <name>" + secondaryColor + " - Retrieves a registered lore.",
 		   primaryColor + "/sg dl,deletelore <name>" + secondaryColor + " - Deletes a registered lore.",
-		   primaryColor + "/sg rc,registerchest <lorename>" + secondaryColor +" - Register the chest you are looking at.",
-		   notYetColor + "/sg dc,deletechest" + secondaryColor + " - Delete (unregister) the chest you are looking at."
+		   primaryColor + "/sg rc,registerchest <chestname>" + secondaryColor +" - Register the chest you are looking at.",
+		   primaryColor + "/sg dc,deletechest [name]" + secondaryColor + " - Delete (unregister) the chest you are looking at, or chest [name]."
    };
    
    
@@ -174,39 +180,64 @@ public void onEnable() {
 
            case "registerchest", "rc" -> {
                if (args.length < 2) {
-                   player.sendMessage(ChatColor.RED + "More arguments needed. Usage: /sg rc <chestname>");
+                   player.sendMessage(ChatColor.RED + "More arguments needed. Usage: /sg rc <chestname with spaces>");
                    return true;
                }
                Block target = player.getTargetBlock(null, 100);
-               player.sendMessage(r.registerChest(target, player, args[1]));
+               player.sendMessage(r.registerChest(target, player, getArgs(args, 1)));
            }
 
            //Utilizes PendingCommand
            case "deletechest", "dc" -> {
-               Block target = player.getTargetBlock(null, 100);
-               if (target.getType() != Material.CHEST && target.getType() != Material.TRAPPED_CHEST) {
-                   player.sendMessage(ChatColor.RED + "You are not looking at a chest.");
-                   return true;
-               }
-               if (!r.isChestRegistered(target)) {
-            	   player.sendMessage(ChatColor.RED + "This chest is not registered.");
-            	   return true;
-               }
-               
-               String registeredChestName = r.getChestName(target);
-               
-               
-               Runnable action = () -> {
-            	   player.sendMessage(r.deleteChest(target, player));
-               };
-               PendingCommand pcmd = pendingCommands.put(player.getUniqueId(), 
-            		   new PendingCommand(player.getUniqueId(), System.currentTimeMillis(), action, "delete chest " + registeredChestName));
-               if (pcmd != null) {
-            	   player.sendMessage(primaryColor + "Previous action " + secondaryColor + pcmd.getDescription() + primaryColor + " was replaced.");
-               }
+        	   Runnable action;
+        	   String description;
+        	   
+        	   //Check if a name was specified
+        	   if (args.length > 1) {
+        		   String name = getArgs(args, 1);
+        		   List<String> keys = r.findKeysByName(name);
+        		   if (keys.isEmpty()) {
+        			   player.sendMessage(ChatColor.RED + "There are no chests registered with name " + name + ".");
+        			   return true;
+        		   } else if (keys.size() > 1) {
+        			   String string = ChatColor.RED + "There are multiple chests registered with name " + name + ":\n";
+        			   string += String.join("; ", keys);
+        			   player.sendMessage(string);
+        			   player.sendMessage(ChatColor.RED + "Look at the chest you want to delete, and run /sg dc");
+        			   return true;
+        		   } else {
+        			   action = () -> {
+        				   player.sendMessage(r.deleteChest(name, player));
+        			   };
+        			   description = "delete chest "+ name + " at " + keys.get(0);
+        		   }
+        	   } else {
+        		   //No name given, instead try to delete chest player is looking at.
+        		   Block target = player.getTargetBlock(null, 100);
+        		   if (target.getType() != Material.CHEST && target.getType() != Material.TRAPPED_CHEST) {
+        			   player.sendMessage(ChatColor.RED + "You are not looking at a chest.");
+        			   return true;
+        		   }
+        		   if (!r.isChestRegistered(target)) {
+        			   player.sendMessage(ChatColor.RED + "This chest is not registered.");
+        			   return true;
+        		   }
+        		   // When we get to this point, we know the chest is registered.
+        		   String registeredChestName = r.getChestName(target);
+        		   action = () -> {
+        			   player.sendMessage(r.deleteChest(target, player));
+        		   };
+        		   description = "delete chest " + registeredChestName;
+        	   }
+    		   PendingCommand pcmd = pendingCommands.put(player.getUniqueId(), 
+    				   new PendingCommand(player.getUniqueId(), System.currentTimeMillis(), action, description));
+    		   if (pcmd != null) {
+    			   player.sendMessage(primaryColor + "Previous action " + secondaryColor + pcmd.getDescription() + primaryColor + " was replaced.");
+    		   }
     		   player.sendMessage(ChatColor.RED + "You are about to delete a chest. This cannot be undone.");
     		   player.sendMessage(ChatColor.RED + "To confirm, run /sg confirm.");
     		   return true;
+
            }
            
            case "listchests", "lc" -> {

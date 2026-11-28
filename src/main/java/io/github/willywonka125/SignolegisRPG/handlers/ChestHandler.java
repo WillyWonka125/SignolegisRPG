@@ -6,10 +6,6 @@ import io.github.willywonka125.SignolegisRPG.util.DataFile;
 
 import java.util.Map;
 
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.block.Chest;
-import org.bukkit.block.DoubleChest;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -40,7 +36,7 @@ public class ChestHandler implements Listener {
 		String key = reg.findRegisteredKey(holder); //Returns null if no chest is registered, so this handles non-chest inventories implicitly.
 		if (key != null) {
 			// Serve the player the saved chest inventory.
-			restoreChestInventory(holder.getInventory(), reg.findRegisteredKey(holder));
+			restoreChestInventory(holder.getInventory(), key);
 		}
 	}
 	

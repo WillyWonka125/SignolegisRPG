@@ -1,6 +1,8 @@
 package io.github.willywonka125.SignolegisRPG;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -77,16 +79,16 @@ public class Register {
 			loresConfigSection = df.getData().getConfigurationSection("lores");
 		} catch (Exception e) {
 			si.getLogger().log(Level.SEVERE, "Failed to read lores from config.", e);
-			return "An error occurred while reading lores. There may be no registered lores.";
+			return ChatColor.DARK_RED + "An error occurred while reading lores. Please see console log.";
 		}
 		
 		if (loresConfigSection == null) {
-			return "No registered lores.";
+			return ChatColor.RED + "No registered lores.";
 		}
 		
 		Set<String> keys = loresConfigSection.getKeys(false);
 		if (keys.isEmpty()) {
-			return "No registered lores.";
+			return ChatColor.RED + "No registered lores.";
 		} 
 		
 		return String.join(", ", keys);
@@ -94,10 +96,11 @@ public class Register {
 	
 	public String deleteLore(String name) {
 		if (!isLoreRegistered(name)) {
-			return "No lore with this name found.";
+			return ChatColor.RED + "No lore with this name found.";
 		}
 		df.getData().set("lores." + name, null);
-		return ChatColor.DARK_RED + "Lore" + name + " deleted.";
+		df.saveDataFile();
+		return ChatColor.GREEN + "Lore " + name + " deleted.";
 	}
 	
 	//Down here deals will all the chests
@@ -137,6 +140,22 @@ public class Register {
 
 	}
 	
+	public String deleteChest(String name, Player player) {
+		List<String> keys = findKeysByName(name);
+		if (keys.isEmpty()) {
+			return ChatColor.RED + "There are no chests registered with this name.";
+		}
+		if (keys.size() > 1) {
+			String string = ChatColor.RED + "There are multiple chests registered under this name (see below). Look at the chest to delete it.\n";
+			string += String.join("; ", keys);
+			return string;
+		}
+		//There is exactly 1 chest with this name! Delete it.
+		df.getData().set("chests." + keys.get(0), null);
+		df.saveDataFile();
+		return ChatColor.GREEN + "Deleted chest " + name;
+	}
+	
 	/**
 	 * Gets the chest's registered name.
 	 * @param chest
@@ -148,7 +167,6 @@ public class Register {
 		}
 		return df.getData().getString("chests." + findRegisteredKey(chest) + ".name");
 	}
-	
 	
 	/**
 	 * Determines if a chest is registered given an InventoryHolder. This handles both single and double chests.
@@ -168,6 +186,15 @@ public class Register {
 		return findRegisteredKey(block) != null;
 	}
 	
+	/**
+	 * Determines if a chest is registered under the given name.
+	 * @param name Name of chest to check (case-insensitive)
+	 * @return true if the chest name is registered at least once, false if no chest is registered under that name.
+	 */
+	public boolean isChestRegistered (String name) {
+		return !findKeysByName(name).isEmpty();
+	}
+	
 	public String listChests() {
 		ConfigurationSection section;
 		try {
@@ -175,12 +202,14 @@ public class Register {
 
 		} catch (Exception e) {
 			si.getLogger().log(Level.SEVERE, "Failed to read chests from config.", e);
-			return "An error occurred while reading chests. There may be no registered chests.";
+			return ChatColor.DARK_RED + "An error occurred while reading chests. Check console log.";
 		}
-		if (section == null) { return "No registered chests."; }
+		if (section == null) { 
+			return ChatColor.RED + "No registered chests."; 
+		}
 		Set<String> keys = section.getKeys(false);
 		if (keys.isEmpty()) {
-			return "No registered chests.";
+			return ChatColor.RED + "No registered chests.";
 		} else {
 			StringBuilder sb = new StringBuilder();
 			sb.append("There are ").append(keys.size()).append(" registered chests:");
@@ -189,10 +218,11 @@ public class Register {
 			for (String key : keys) {
 			    ConfigurationSection chest = section.getConfigurationSection(key);
 			    String name = chest.getString("name", "unnamed");
-			    Location chestLoc = deserializeLoc(key);
-			    String world = chestLoc.getWorld().getName();
-			    String coords = (int)chestLoc.getX() + ", " + (int)chestLoc.getY() + ", " + (int)chestLoc.getZ();
-			    sb.append("\n").append(name).append(" | ").append(world).append(" | ").append(coords);
+			    String[] coords = key.split(",");
+			    sb.append("\n").append(name).append(" | ").append(coords[0]).append(" | ")
+			    .append(coords[1]).append(", ")
+			    .append(coords[2]).append(", ")
+			    .append(coords[3]);
 			}
 			return sb.toString();
 		}
@@ -237,7 +267,7 @@ public class Register {
 	/**
 	 *  Determines the location a given chest is registered under (if any).
 	 * @param block
-	 * @return Returns the registered key for this chest or double chest, or null if neither half of the chest is registered
+	 * @return Returns the registered key for this block, or null if there is no chest or double chest registered at this block's location.
 	 */
 	public String findRegisteredKey(Block block) {
 		
@@ -258,6 +288,40 @@ public class Register {
 		
 		return findRegisteredKey (((Chest) state).getInventory().getHolder());
 		
+	}
+	
+	/**
+	 * Attempts to find a chest's registered key given its registered name (case insensitive).
+	 * @param name The name associated with the chest.
+	 * @return The keys associated with the name, or an empty List if no matches.
+	 */
+	public List<String> findKeysByName(String name) {
+		
+		List<String> matchedKeys = new ArrayList<>();
+		
+		// Loop through all the chests and check each of their name values.
+		//Get the chests section.
+		ConfigurationSection section;
+		try {
+			section = df.getData().getConfigurationSection("chests");
+
+		} catch (Exception e) {
+			si.getLogger().log(Level.SEVERE, "Failed to read chests from config.", e);
+			return matchedKeys;
+		}
+		if (section == null) { 
+			return matchedKeys; 
+		}
+		//We have the chests configuration section. Get the keys and iterate through them.
+		Set<String> keys = section.getKeys(false);
+
+		for (String key : keys) {
+			String n = section.getString(key + ".name");
+			if (name.equalsIgnoreCase(n)) {
+				matchedKeys.add(key);
+			}
+		}
+		return matchedKeys;
 	}
 	
 	public String serializeLoc(Location loc){
